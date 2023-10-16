@@ -1,1 +1,1 @@
-# Dynamics365Sales
+# Dynamics 365 Sales
