@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="ClientGlobalContext.js.aspx"></script>
+	<title></title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+<style type="text/css">
+	.hideit{
+		display: none;
+	}
+	.summary-box{
+		flex: left;
+		width: 100%;
+		border: 3px solid #742774;
+	}
+	.box-h{
+		font-size: 15px;
+    font-weight: bold;
+    background: #742774;
+    color: white;
+	}
+	.box-v{
+		font-weight: bold;
+    font-size: 20px;
+	}
+</style>
+</head>
+<body onload="getGrades()">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<h2 style="text-align: center;">Grades Summary</h2>
+				<div class="row" style="margin-top:15px">
+					<div class="col-md-12 ">
+						<label>Assignments: </label>
+						<select class="" id="assignments" onchange="getGradeByAssignment()">
+							<option></option>
+						</select>
+						
+					</div>
+				</div>
+				<div class="row summary-row " style="margin-top:20px">
+					<div class="col-md-12">
+						<div class="col-md-2"></div>
+						<div class="col-md-12">
+							<div class="row">
+								<div class="col-md-2"></div>
+
+								<div class="col-md-8">
+									<div class="row">
+										<div class="col-md-4 text-center">
+											<div class="summary-box">
+												<p class="box-h">Total Assignments</p>
+												<span class="box-v" id="tassignments"></span>
+											</div>
+										</div>
+										<div class="col-md-4 text-center">
+											<div class="summary-box">
+												<p class="box-h">Total Score</p>
+												<span class="box-v" id="tscore"></span>
+											</div>
+										</div>
+										<div class="col-md-4 text-center">
+											<div class="summary-box">
+												<p class="box-h">Student Total Score</p>
+												<span class="box-v" id="stscore"></span>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+
+								<div class="col-md-2"></div>
+							</div>
+						</div>
+						
+						<div class="col-md-2"></div>
+						<h5 class="presentBox hideit">Total Present: <span id="tpresent"></span></h5>
+						<h5 class="hideit">Total Absent: <span id="tabsent"></span></h5>
+						<h5 class="hideit">Total Late: <span id="tlate"></span></h5>
+						<h5 class="hideit">Total Hours: <span id="thours"></span></h5>
+					</div>
+					<div class="col-md-4">
+						
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+
+<script type="text/javascript">
+	let id = Xrm.Page.data.entity.getId();
+		id = id.replace(/[{}]/g, "");
+		console.log("ID: "+id);
+
+	
+
+	try{
+		let formType = Xrm.Page.ui.getFormType();
+		console.log("form type "+formType);
+        if (formType == 1){
+        	console.log("new record");
+        	throw "new record";
+            //return;
+        }
+
+	}
+	catch(ex){
+		console.log("Error: "+ex);
+	}
+	function getGrades()
+		{
+			try
+			{
+				let totalScore=0;
+				let studentScore=0;
+				let assignments = "<option>All</option>";
+				Xrm.WebApi.retrieveMultipleRecords("int_grade", "?$select=*&$filter=_cfa_student_value eq "+id+" and statecode eq 0").then(
+		    		function success(result) {
+
+			        	//leadDetails(result);
+			        	//totalScore = result["xp_leadscore"];
+			        	console.log("All Grades => "+JSON.stringify(result));
+			        	console.log("grades length: "+result.entities.length);
+
+			        	$("#tassignments").text(result.entities.length);
+
+			        	for(var i=0; i < result.entities.length; i++)
+			        	{
+			        		totalScore += result.entities[i].cfa_assignmenttotalscore;
+			        		studentScore += result.entities[i].cfa_score;
+
+
+			        		console.log("present "+result.entities[i].mshied_ispresent);
+			        		
+			        		if(result.entities[i]._cfa_assessment_value != null)
+			        		{
+			        			assignments += "<option value='"+result.entities[i]["_cfa_assessment_value"]+"'>"+
+			        			result.entities[i]["_cfa_assessment_value@OData.Community.Display.V1.FormattedValue"]+"</option>";
+			        			console.log("Grade "+result.entities[i]._cfa_assessment_value);
+			        			/*
+			        			if( !sessionsS.includes("<option value='"+result.entities[i]["_mshied_coursesectionid_value"]+"'>"+
+			        			result.entities[i]["_mshied_coursesectionid_value@OData.Community.Display.V1.FormattedValue"]+"</option>") )
+			        			{
+			        				sessionsS += "<option value='"+result.entities[i]["_mshied_coursesectionid_value"]+"'>"+
+			        			result.entities[i]["_mshied_coursesectionid_value@OData.Community.Display.V1.FormattedValue"]+"</option>";
+			        			}
+			        			*/
+			        		}
+			        	}
+			        	$("#tscore").text(totalScore);
+			        	$("#stscore").text(studentScore);
+			        	$("#assignments").html(assignments);
+
+			    	},
+			    	function(error) {
+			    		console.log("Error: "+error);
+			        	Xrm.Utility.alertDialog(error.message);
+			        	alert("Error: "+JSON.stringify(error));
+			        	//showAlert("Error",error);
+						//$(".loaderdiv").addClass("hideit");
+			    	});
+			}
+			catch(error)
+			{
+				//showAlert("Error",error);
+				console.log("Error: "+error);
+			}
+			
+		}
+
+	function getGradeByAssignment()
+	{
+		let totalScore=0;
+		let studentScore=0;
+		let selectedAssignment = $("#assignments").val();
+		if(selectedAssignment == "All"){
+			getGrades();
+		}
+		else
+		{
+			Xrm.WebApi.retrieveMultipleRecords("int_grade", "?$select=*&$filter=_cfa_assessment_value eq "+selectedAssignment+" and _cfa_student_value eq "+id+" and statecode eq 0").then(
+			function success(result) {
+
+	        	//leadDetails(result);
+	        	//totalScore = result["xp_leadscore"];
+	        	console.log("Grades by Assignment => "+JSON.stringify(result));
+	        	console.log("Grades by Assignment length: "+result.entities.length);
+	        	for(var i=0; i < result.entities.length; i++)
+	        	{
+	        		totalScore += result.entities[i].cfa_assignmenttotalscore;
+	        		studentScore += result.entities[i].cfa_score;
+
+	        	}
+	        	$("#tscore").text(totalScore);
+			    $("#stscore").text(studentScore);
+
+	    	},
+	    	function(error) {
+	    		console.log("Error: "+error);
+	        	Xrm.Utility.alertDialog(error.message);
+	    	});
+		}
+		
+	}
+
+</script>

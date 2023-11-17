@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="ClientGlobalContext.js.aspx"></script>
+	<title></title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+<style type="text/css">
+	.hideit{
+		display: none;
+	}
+	.summary-box{
+		flex: left;
+		width: 100%;
+		border: 3px solid #742774;
+	}
+	.box-h{
+		font-size: 15px;
+    font-weight: bold;
+    background: #742774;
+    color: white;
+	}
+	.box-v{
+		font-weight: bold;
+    font-size: 20px;
+	}
+</style>
+</head>
+<body onload="getAttendance()">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<h2 style="text-align: center;">Attendance Summary</h2>
+				<div class="row" style="margin-top:15px">
+					<div class="col-md-12">
+						<label>Seession: </label>
+						<select id="session" onchange="getAttendanceBySession()">
+							<option></option>
+						</select>
+						
+					</div>
+				</div>
+				<div class="row summary-row" style="margin-top:20px">
+					<div class="col-md-12">
+						<div class="col-md-2"></div>
+						<div class="col-md-12">
+							<div class="row">
+								<div class="col-md-2"></div>
+								<div class="col-md-2 text-center">
+									<div class="summary-box">
+										<p class="box-h">Days Present</p>
+										<span class="box-v" id="tpresent"></span>
+									</div>
+								</div>
+								<div class="col-md-2 text-center">
+									<div class="summary-box">
+										<p class="box-h">Days Absent</p>
+										<span class="box-v" id="tabsent"></span>
+									</div>
+								</div>
+								<div class="col-md-2 text-center">
+									<div class="summary-box">
+										<p class="box-h">Days Late</p>
+										<span class="box-v" id="tlate"></span>
+									</div>
+								</div>
+								<div class="col-md-2 text-center">
+									<div class="summary-box">
+										<p class="box-h">Total Hours</p>
+										<span class="box-v" id="thours"></span>
+									</div>
+								</div>
+								<div class="col-md-2"></div>
+							</div>
+						</div>
+						
+						<div class="col-md-2"></div>
+						<h5 class="presentBox hideit">Total Present: <span id="tpresent"></span></h5>
+						<h5 class="hideit">Total Absent: <span id="tabsent"></span></h5>
+						<h5 class="hideit">Total Late: <span id="tlate"></span></h5>
+						<h5 class="hideit">Total Hours: <span id="thours"></span></h5>
+					</div>
+					<div class="col-md-4">
+						
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+
+<script type="text/javascript">
+	let id = Xrm.Page.data.entity.getId();
+		id = id.replace(/[{}]/g, "");
+		console.log("ID: "+id);
+
+	
+
+	try{
+		let formType = Xrm.Page.ui.getFormType();
+		console.log("form type "+formType);
+        if (formType == 1){
+        	console.log("new record");
+        	throw "new record";
+            //return;
+        }
+
+		let id = Xrm.Page.data.entity.getId();
+			id = id.replace(/[{}]/g, "");
+			console.log("ID: "+id);
+	}
+	catch(ex){
+		console.log("Error: "+ex);
+	}
+	function getAttendance()
+		{
+			try
+			{
+				
+				
+				let totalPresent=0;
+				let totalAbsent=0;
+				let totalHours=0;
+				let totalLate=0;
+				let sessionsS = "<option>All</option>";
+				Xrm.WebApi.retrieveMultipleRecords("mshied_attendance", "?$select=*&$filter=_mshied_studentid_value eq "+id).then(
+		    		function success(result) {
+
+			        	//leadDetails(result);
+			        	//totalScore = result["xp_leadscore"];
+			        	console.log(result);
+			        	console.log("length: "+result.entities.length);
+			        	for(var i=0; i < result.entities.length; i++)
+			        	{
+			        		totalHours += result.entities[i].cfa_hours;
+			        		console.log("present "+result.entities[i].mshied_ispresent);
+			        		if(result.entities[i].mshied_ispresent == 494280000)
+			        		{
+			        			totalPresent += 1;
+			        		}
+			        		else if(result.entities[i].mshied_ispresent == 100000000)
+			        		{
+			        			totalAbsent += 1;
+			        		}
+			        		else if(result.entities[i].mshied_ispresent == 494280001)
+			        		{
+			        			totalLate += 1;
+			        		}
+			        		if(result.entities[i]._mshied_coursesectionid_value != null)
+			        		{
+			        			if( !sessionsS.includes("<option value='"+result.entities[i]["_mshied_coursesectionid_value"]+"'>"+
+			        			result.entities[i]["_mshied_coursesectionid_value@OData.Community.Display.V1.FormattedValue"]+"</option>") )
+			        			{
+			        				sessionsS += "<option value='"+result.entities[i]["_mshied_coursesectionid_value"]+"'>"+
+			        			result.entities[i]["_mshied_coursesectionid_value@OData.Community.Display.V1.FormattedValue"]+"</option>";
+			        			}
+			        			
+			        		}
+			        	}
+			        	$("#tpresent").text(totalPresent);
+			        	$("#tabsent").text(totalAbsent);
+			        	$("#tlate").text(totalLate);
+			        	$("#thours").text(totalHours);
+			        	$("#session").html(sessionsS);
+
+			    	},
+			    	function(error) {
+			    		console.log("Error: "+error);
+			        	Xrm.Utility.alertDialog(error.message);
+			        	alert("Error: "+JSON.stringify(error));
+			        	//showAlert("Error",error);
+						//$(".loaderdiv").addClass("hideit");
+			    	});
+			}
+			catch(error)
+			{
+				//showAlert("Error",error);
+				console.log("Error: "+error);
+			}
+			
+		}
+
+	function getAttendanceBySession()
+	{
+		let totalPresent=0;
+		let totalAbsent=0;
+		let totalHours=0;
+		let sessionsS;
+		let selectedSesssion = $("#session").val();
+		if(selectedSesssion == "All"){
+			getAttendance();
+		}
+		else
+		{
+			Xrm.WebApi.retrieveMultipleRecords("mshied_attendance", "?$select=*&$filter=_mshied_coursesectionid_value eq "+selectedSesssion+" and _mshied_studentid_value eq "+id).then(
+			function success(result) {
+
+	        	//leadDetails(result);
+	        	//totalScore = result["xp_leadscore"];
+	        	console.log(result);
+	        	console.log("length: "+result.entities.length);
+	        	for(var i=0; i < result.entities.length; i++)
+	        	{
+	        		totalHours += result.entities[i].cfa_hours;
+	        		console.log("present "+result.entities[i].mshied_ispresent);
+	        		if(result.entities[i].mshied_ispresent == 494280000)
+	        		{
+	        			totalPresent += 1;
+	        		}
+	        		else if(result.entities[i].mshied_ispresent == 100000000)
+	        		{
+	        			totalAbsent += 1;
+	        		}
+	        		else if(result.entities[i].mshied_ispresent == 494280001)
+	        		{
+	        			totalLate += 1;
+	        		}
+	        		if(result.entities[i]._mshied_coursesectionid_value != null)
+	        		{
+	        			//sessionsS += "<option>"+
+	        			//result.entities[i]["_mshied_coursesectionid_value@OData.Community.Display.V1.FormattedValue"]+"</option>";
+	        		}
+	        	}
+	        	$("#tpresent").text(totalPresent);
+	        	$("#tabsent").text(totalAbsent);
+	        	$("#thours").text(totalHours);
+	        	$("#tlate").text(totalLate);
+	        	$("#session").html(sessionsS);
+
+	    	},
+	    	function(error) {
+	    		console.log("Error: "+error);
+	        	Xrm.Utility.alertDialog(error.message);
+	        	//alert("Error: "+JSON.stringify(error));
+	        	//showAlert("Error",error);
+				//$(".loaderdiv").addClass("hideit");
+	    	});
+		}
+		
+	}
+
+</script>
